@@ -34,8 +34,8 @@ export default function ApiNotice({ apiType }: Props) {
             </>
           ) : apiType === "anthropic" ? (
             <>
-              Anthropic APIの利用には料金が発生します。 Claude
-              3の利用料金は入力と出力のトークン数に基づいて計算されます。 詳細は
+              Anthropic APIの利用には料金が発生します。
+              利用料金は入力と出力のトークン数に基づいて計算されます。 詳細は
               <a
                 href="https://www.anthropic.com/pricing#anthropic-api"
                 target="_blank"

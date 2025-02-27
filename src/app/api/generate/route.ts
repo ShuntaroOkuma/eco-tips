@@ -20,8 +20,8 @@ export async function POST(request: Request) {
 
     const userPrompt = `
 現在のデータ:
-- 電力使用量: ${data.electricity}kWh
-- 水使用量: ${data.water}L
+- 先月の電力使用量: ${data.electricity}kWh
+- 先月の水使用量: ${data.water}L
 - 気温: ${data.temperature}℃
 - 湿度: ${data.humidity}%
 - 天気: ${data.weather}
