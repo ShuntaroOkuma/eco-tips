@@ -23,7 +23,7 @@ export default function ApiNotice({ apiType }: Props) {
               OpenAI APIの利用には料金が発生します。
               1リクエストあたりの料金は使用するモデルによって異なります。 詳細は
               <a
-                href="https://openai.com/pricing"
+                href="https://openai.com/ja-JP/api/pricing/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"

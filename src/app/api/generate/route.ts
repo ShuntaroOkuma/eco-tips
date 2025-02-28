@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import type { ParsedData, ApiConfig } from "../../../types";
+import {
+  GoogleGenerativeAI,
+  GenerateContentRequest,
+} from "@google/generative-ai";
 
 const OPENAI_SYSTEM_PROMPT = `あなたは省エネアドバイザーです。
 与えられたデータを基に、エコな生活のためのTipsを10個生成してください。
@@ -7,6 +11,11 @@ const OPENAI_SYSTEM_PROMPT = `あなたは省エネアドバイザーです。
 回答はTipsを数字付きの箇条書きにした内容のみにしてください。ヘッダや前置き、まとめなどは不要です。`;
 
 const ANTHROPIC_SYSTEM_PROMPT = `あなたは省エネアドバイザーです。
+与えられたデータを基に、エコな生活のためのTipsを10個生成してください。
+各Tipsは50文字以内で、具体的で実行可能な内容にしてください。
+回答はTipsを数字付きの箇条書きにした内容のみにしてください。ヘッダや前置き、まとめなどは不要です。`;
+
+const GEMINI_SYSTEM_PROMPT = `あなたは省エネアドバイザーです。
 与えられたデータを基に、エコな生活のためのTipsを10個生成してください。
 各Tipsは50文字以内で、具体的で実行可能な内容にしてください。
 回答はTipsを数字付きの箇条書きにした内容のみにしてください。ヘッダや前置き、まとめなどは不要です。`;
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
         .slice(0, 10);
 
       return NextResponse.json({ tips });
-    } else {
+    } else if (config.type === "anthropic") {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           model: "claude-3-7-sonnet-20250219",
-          max_tokens: 1024,
+          max_tokens: 1000,
           messages: [
             {
               role: "user",
@@ -124,56 +133,78 @@ export async function POST(request: Request) {
       }
 
       const content = result.content[0].text || "";
-      // let content = `
-      //         '# エコライフTips\n' +
-      //         '\n' +
-      //         '1. 未使用の部屋の照明はこまめに消しましょう\n' +
-      //         '2. シャワー時間を1分短縮すると約10Lの水が節約できます\n' +
-      //         '3. 晴れの日は自然光を活用し、カーテンを開けましょう\n' +
-      //         '4. 25℃なら冷房は28℃設定で十分快適に過ごせます\n' +
-      //         '5. こまめな水道の蛇口閉めで無駄な水使用を防ぎましょう\n' +
-      //         '6. 使わない電化製品はコンセントから抜きましょう\n' +
-      //         '7. 2人で料理すると効率的にエネルギーが節約できます\n' +
-      //         '8. 洗濯物は天気がいい日に外干しすると乾燥機が不要です\n' +
-      //         '9. PCやスマホの画面の明るさを下げて省エネしましょう\n' +
-      //         '10. 冷蔵庫の開閉回数を減らして電力消費を抑えましょう'
-      // `;
-      console.log("Anthropic API content:", content);
-
       const tips = content
-        .replace(/'|\+/g, "")
-        .replace(/\n\n/g, "\n")
         .split("\n")
-        .filter((line: string) => line.trim())
+        .map((line: string) => line.trim())
+        .filter((line: string) => line && !line.match(/^\d+\./))
         .slice(0, 10);
 
-      console.log("Tips:", tips);
-
-      // if (tips.length < 10) {
-      //   return NextResponse.json(
-      //     { error: "生成されたTipsが不足しています" },
-      //     { status: 500 }
-      //   );
-      // }
-
       return NextResponse.json({ tips });
+    } else if (config.type === "gemini") {
+      if (!config.projectId) {
+        return NextResponse.json(
+          { error: "Gemini APIにはプロジェクトIDが必要です" },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const genAI = new GoogleGenerativeAI(config.apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const contentRequest: GenerateContentRequest = {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: `${GEMINI_SYSTEM_PROMPT}\n\n${userPrompt}` }],
+            },
+          ],
+        };
+
+        const result = await model.generateContent(contentRequest);
+
+        const response = await result.response;
+        const content = response.text();
+
+        const tips = content
+          .split("\n")
+          .map((line: string) => line.trim())
+          .filter((line: string) => line && !line.match(/^\d+\./))
+          .slice(0, 10);
+
+        return NextResponse.json({ tips });
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        return NextResponse.json(
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Gemini APIでエラーが発生しました",
+          },
+          { status: 500 }
+        );
+      }
     }
+
+    return NextResponse.json({ error: "無効なAPI種別です" }, { status: 400 });
   } catch (error) {
     console.error("API Error:", error);
-    let errorMessage = "Unknown error occurred";
+    let errorMessage = "エラーが発生しました";
     let statusCode = 500;
 
     if (error instanceof Error) {
       errorMessage = error.message;
       if (error.message.includes("API key")) {
         statusCode = 401;
-        errorMessage = "Invalid API key";
+        errorMessage = "APIキーが無効です";
       } else if (error.message.includes("rate limit")) {
         statusCode = 429;
-        errorMessage = "Rate limit exceeded. Please try again later.";
+        errorMessage =
+          "APIの利用制限に達しました。しばらく時間をおいて再度お試しください。";
       } else if (error.message.includes("model")) {
         statusCode = 400;
-        errorMessage = "Invalid model specified";
+        errorMessage = "無効なモデルが指定されました";
       }
     }
 

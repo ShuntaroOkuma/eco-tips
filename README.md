@@ -1,13 +1,11 @@
 # エコ Tips ジェネレーター
 
-（※ OpenHands × Claude 3.7 Sonnet を使用し、開発したサンプルプロジェクトです。）
-
 電力と水の消費データ、気温、湿度、天気、在室人数を入力することで、エコな生活をするための Tips を 10 個生成する Web アプリケーションです。
 
 ## 機能
 
 - 電力使用量、水使用量、気温、湿度、天気、在室人数のデータ入力
-- OpenAI または Anthropic の API を使用した Tips 生成
+- OpenAI、Anthropic、Gemini の API を使用した Tips 生成
 - データの永続化（localStorage）
 - レスポンシブデザイン
 - エラーハンドリング
@@ -17,12 +15,15 @@
 - Next.js
 - TypeScript
 - Tailwind CSS
-- OpenAI API / Anthropic API
+- OpenAI API / Anthropic API / Gemini API
 
 ## 必要条件
 
 - Node.js 18.0.0 以上
-- OpenAI または Anthropic の API キー
+- 以下のいずれかの API キー：
+  - OpenAI API キー
+  - Anthropic API キー
+  - Gemini API キー（Google Cloud のプロジェクト ID も必要）
 
 ## インストール方法
 
@@ -41,11 +42,14 @@ npm run dev
 ## 使用方法
 
 1. アプリケーションを起動し、ブラウザで`http://localhost:3000`にアクセス
-2. OpenAI または Anthropic の API キーを設定
+2. 使用する API を選択し、必要な認証情報を設定：
+   - OpenAI: API キー
+   - Anthropic: API キー
+   - Gemini: API キーとプロジェクト ID
 3. 以下のような形式でデータを入力：
    ```
-   先月の電力使用量: 15kWh
-   先月の水使用量: 150L
+   電力使用量: 15kWh
+   水使用量: 150L
    気温: 28℃
    湿度: 65%
    天気: 曇り
@@ -72,7 +76,7 @@ npm run dev
 
 ### 利用料金
 
-このアプリケーションでは、選択した LLM サービス（OpenAI または Anthropic）の API を使用します。
+このアプリケーションでは、選択した LLM サービスの API を使用します。
 API の利用には各サービスの料金体系に基づいて料金が発生します：
 
 #### OpenAI API
@@ -87,11 +91,18 @@ API の利用には各サービスの料金体系に基づいて料金が発生�
 - 入力と出力のトークン数に基づいて料金が計算されます
 - 詳細は[Anthropic の料金ページ](https://www.anthropic.com/pricing)をご確認ください
 
+#### Gemini API
+
+- Gemini Pro モデルを使用
+- 入力と出力のトークン数に基づいて料金が計算されます
+- Google Cloud のプロジェクト ID が必要です
+- 詳細は[Google Cloud の料金ページ](https://ai.google.dev/gemini-api/docs/pricing?hl=ja)をご確認ください
+
 ### API キーの管理
 
 - API キーは「API キーを削除」ボタンで削除できます
 - 新しい API キーはいつでも再設定可能です
-- OpenAI と Anthropic の API を切り替えて使用できます
+- OpenAI、Anthropic、Gemini の API を切り替えて使用できます
 
 ## エラーハンドリング
 
@@ -101,6 +112,7 @@ API の利用には各サービスの料金体系に基づいて料金が発生�
 - API のレート制限に達した場合
 - データが不足している場合
 - Tips 生成に失敗した場合
+- プロジェクト ID が無効な場合（Gemini API）
 
 ## 注意事項
 

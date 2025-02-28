@@ -12,6 +12,7 @@ export interface ParsedData extends EcoData {
 }
 
 export interface ApiConfig {
-  type: 'openai' | 'anthropic';
+  type: 'openai' | 'anthropic' | 'gemini';
   apiKey: string;
+  projectId?: string; // Gemini APIで使用
 }
